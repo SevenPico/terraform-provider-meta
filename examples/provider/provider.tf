@@ -1,3 +1,3 @@
-provider "scaffolding" {
+provider "meta" {
   # example configuration here
 }
