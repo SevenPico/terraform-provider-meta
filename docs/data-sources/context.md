@@ -3,12 +3,12 @@
 page_title: "context Data Source - terraform-provider-meta"
 subcategory: ""
 description: |-
-  Context data source
+  Context Data Source
 ---
 
 # context (Data Source)
 
-Context data source
+Context Data Source
 
 ## Example Usage
 
@@ -23,44 +23,59 @@ data "context" "this" {
 
 ### Optional
 
-- `attributes` (List of String) List of strings.
-- `descriptors` (Attributes Map) (see [below for nested schema](#nestedatt--descriptors))
+- `attributes` (List of String) TODO
+- `context` (Attributes) TODO (see [below for nested schema](#nestedatt--context))
+- `descriptors` (Attributes Map) TODO (see [below for nested schema](#nestedatt--descriptors))
 - `enabled` (Boolean) Set `true` if resources using this context should be created.
-- `id_descriptor` (Attributes) (see [below for nested schema](#nestedatt--id_descriptor))
-- `tags` (Map of String) Map of strings.
+- `tags` (Map of String) TODO
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `outputs` (Map of String)
+- `id` (String) TODO
+- `outputs` (Map of String) TODO
+
+<a id="nestedatt--context"></a>
+### Nested Schema for `context`
+
+Optional:
+
+- `attributes` (List of String) TODO
+- `descriptors` (Attributes Map) TODO (see [below for nested schema](#nestedatt--context--descriptors))
+- `enabled` (Boolean) Set `true` if resources using this context should be created.
+- `tags` (Map of String) TODO
+
+<a id="nestedatt--context--descriptors"></a>
+### Nested Schema for `context.descriptors`
+
+Optional:
+
+- `attributes` (Boolean) Set `true` to include `attributes` in output
+- `delimiter` (String) String to separate `tags` values specified in `order`.
+Default: ""
+- `limit` (Number) Character limit of output. Tail characters are trimmed.
+- `lower` (Boolean) Set `true` to force output to lower-case
+- `order` (List of String) Ordered list of keys in `tags` for which the corresponding value should be included in the output.
+Default: `[]`
+- `reverse` (Boolean) Set `true` to reverse the order of `tags` values specified in `order`
+- `title` (Boolean) Set `true` to force output to title-case
+- `upper` (Boolean) Set `true` to force output to upper-case
+
+
 
 <a id="nestedatt--descriptors"></a>
 ### Nested Schema for `descriptors`
 
 Optional:
 
-- `attributes` (Boolean)
-- `delimiter` (String)
-- `limit` (Number)
-- `lower` (Boolean)
-- `order` (List of String)
-- `reverse` (Boolean)
-- `title` (Boolean)
-- `upper` (Boolean)
-
-
-<a id="nestedatt--id_descriptor"></a>
-### Nested Schema for `id_descriptor`
-
-Optional:
-
-- `attributes` (Boolean)
-- `delimiter` (String)
-- `limit` (Number)
-- `lower` (Boolean)
-- `order` (List of String)
-- `reverse` (Boolean)
-- `title` (Boolean)
-- `upper` (Boolean)
+- `attributes` (Boolean) Set `true` to include `attributes` in output
+- `delimiter` (String) String to separate `tags` values specified in `order`.
+Default: ""
+- `limit` (Number) Character limit of output. Tail characters are trimmed.
+- `lower` (Boolean) Set `true` to force output to lower-case
+- `order` (List of String) Ordered list of keys in `tags` for which the corresponding value should be included in the output.
+Default: `[]`
+- `reverse` (Boolean) Set `true` to reverse the order of `tags` values specified in `order`
+- `title` (Boolean) Set `true` to force output to title-case
+- `upper` (Boolean) Set `true` to force output to upper-case
 
 

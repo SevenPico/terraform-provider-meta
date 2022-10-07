@@ -6,24 +6,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ datasource.DataSource = &ContextData{}
+var _ datasource.DataSource = &ContextDataSource{}
 
-type ContextData struct {
-	Enabled      *bool                 `tfsdk:"enabled"`
-	Attributes   []string              `tfsdk:"attributes"`
-	Tags         map[string]string     `tfsdk:"tags"`
-	IdDescriptor *Descriptor           `tfsdk:"id_descriptor"`
-	Descriptors  map[string]Descriptor `tfsdk:"descriptors"`
-
-	// Computed
-	Id      *string            `tfsdk:"id"`
-	Outputs map[string]*string `tfsdk:"outputs"`
-}
+type ContextDataSource struct{}
 
 type Descriptor struct {
 	Delimiter  *string  `tfsdk:"delimiter"`
@@ -34,162 +24,270 @@ type Descriptor struct {
 	Reverse    *bool    `tfsdk:"reverse"`
 	Attributes *bool    `tfsdk:"attributes"`
 	Limit      *int     `tfsdk:"limit"`
-	// Replace map[string]string
 }
 
 func NewContextDataSource() datasource.DataSource {
-	return &ContextData{}
+	return &ContextDataSource{}
 }
 
-func (d *ContextData) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *ContextDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = "context"
 }
 
-func (d *ContextData) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	descriptorAttribute := map[string]tfsdk.Attribute{
+func (d *ContextDataSource) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	descriptorAttributes := map[string]tfsdk.Attribute{
 		"order": {
-			Type:     types.ListType{ElemType: types.StringType},
-			Optional: true,
+			MarkdownDescription: "Ordered list of keys in `tags` for which the corresponding value should be included in the output.\nDefault: `[]`",
+			Type:                types.ListType{ElemType: types.StringType},
+			Optional:            true,
 		},
 		"delimiter": {
-			Type:     types.StringType,
-			Optional: true,
+			MarkdownDescription: "String to separate `tags` values specified in `order`.\nDefault: \"\"",
+			Type:                types.StringType,
+			Optional:            true,
 		},
 		"lower": {
-			Type:     types.BoolType,
-			Optional: true,
+			MarkdownDescription: "Set `true` to force output to lower-case",
+			Type:                types.BoolType,
+			Optional:            true,
 		},
 		"upper": {
-			Type:     types.BoolType,
-			Optional: true,
+			MarkdownDescription: "Set `true` to force output to upper-case",
+			Type:                types.BoolType,
+			Optional:            true,
 		},
 		"title": {
-			Type:     types.BoolType,
-			Optional: true,
+			MarkdownDescription: "Set `true` to force output to title-case",
+			Type:                types.BoolType,
+			Optional:            true,
 		},
 		"reverse": {
-			Type:     types.BoolType,
-			Optional: true,
+			MarkdownDescription: "Set `true` to reverse the order of `tags` values specified in `order`",
+			Type:                types.BoolType,
+			Optional:            true,
 		},
 		"attributes": {
-			Type:     types.BoolType,
-			Optional: true,
+			MarkdownDescription: "Set `true` to include `attributes` in output",
+			Type:                types.BoolType,
+			Optional:            true,
 		},
 		"limit": {
-			Type:     types.NumberType,
-			Optional: true,
+			MarkdownDescription: "Character limit of output. Tail characters are trimmed.",
+			Type:                types.NumberType,
+			Optional:            true,
 		},
 	}
 
-	attributes := map[string]tfsdk.Attribute{
+	contextAttributes := map[string]tfsdk.Attribute{
 		"enabled": {
 			MarkdownDescription: "Set `true` if resources using this context should be created.",
 			Type:                types.BoolType,
 			Optional:            true,
 		},
 		"attributes": {
-			MarkdownDescription: "List of strings.",
+			MarkdownDescription: "TODO",
 			Type:                types.ListType{ElemType: types.StringType},
 			Optional:            true,
 		},
 		"tags": {
-			MarkdownDescription: "Map of strings.",
+			MarkdownDescription: "TODO",
 			Type:                types.MapType{ElemType: types.StringType},
 			Optional:            true,
 		},
-
 		"descriptors": {
-			Attributes: tfsdk.MapNestedAttributes(descriptorAttribute),
-			Optional:   true,
-		},
-
-		"id_descriptor": {
-			Attributes: tfsdk.SingleNestedAttributes(descriptorAttribute),
-			Optional:   true,
-		},
-
-		// Computed
-		"id": {
-			Type:     types.StringType,
-			Computed: true,
-		},
-		"outputs": {
-			Type:     types.MapType{ElemType: types.StringType},
-			Computed: true,
+			MarkdownDescription: "TODO",
+			Attributes:          tfsdk.MapNestedAttributes(descriptorAttributes),
+			Optional:            true,
 		},
 	}
 
+	attributes := map[string]tfsdk.Attribute{
+		"context": {
+			MarkdownDescription: "TODO",
+			Attributes:          tfsdk.SingleNestedAttributes(contextAttributes),
+			Optional:            true,
+		},
+		"outputs": {
+			MarkdownDescription: "TODO",
+			Type:                types.MapType{ElemType: types.StringType},
+			Computed:            true,
+		},
+		"id": {
+			MarkdownDescription: "TODO",
+			Type:                types.StringType,
+			Computed:            true,
+		},
+	}
+
+	for k, v := range contextAttributes {
+		attributes[k] = v
+	}
+
 	s := tfsdk.Schema{
-		MarkdownDescription: "Context data source",
+		MarkdownDescription: "Context Data Source",
 		Attributes:          attributes,
 	}
 
 	return s, nil
 }
 
-func (d *ContextData) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	resp.Diagnostics.AddWarning("This is a warning!", "Beware!")
-
-	// Read Terraform configuration data into the model
-	diag := req.Config.Get(ctx, d)
+func (d *ContextDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	// merge enabled
+	var enabled types.Bool
+	diag := req.Config.GetAttribute(ctx, path.Root("enabled"), &enabled)
 	resp.Diagnostics.Append(diag...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	tflog.Trace(ctx, "read a data source")
-
-	d.Id = d.BuildDescriptor(d.IdDescriptor)
-
-	d.Outputs = map[string]*string{}
-
-	for k, v := range d.Descriptors {
-		d.Outputs[k] = d.BuildDescriptor(&v)
-	}
-
-	// Save data into Terraform state
-	diag = resp.State.Set(ctx, d)
+	var parentEnabled types.Bool
+	diag = req.Config.GetAttribute(ctx, path.Root("context").AtName("enabled"), &parentEnabled)
 	resp.Diagnostics.Append(diag...)
-}
 
-func (d *ContextData) BuildDescriptor(descriptor *Descriptor) *string {
-	idParts := []string{}
-
-	for _, tag_key := range descriptor.Order {
-		if tag_val, ok := d.Tags[tag_key]; ok {
-			idParts = append(idParts, tag_val)
+	if enabled.Null || enabled.Unknown {
+		if !(parentEnabled.Null || parentEnabled.Unknown) {
+			diag = resp.State.SetAttribute(ctx, path.Root("enabled"), parentEnabled)
 		} else {
-			// TODO - warn
+			resp.Diagnostics.AddWarning("Attribute `enabled` not set or inherited.", "Using default: `true`")
+			diag = resp.State.SetAttribute(ctx, path.Root("enabled"), true)
+		}
+		resp.Diagnostics.Append(diag...)
+	}
+
+	// merge attributes
+	attributes := []string{}
+	var newAttributes types.List
+	var parentAttributes types.List
+
+	diag = req.Config.GetAttribute(ctx, path.Root("attributes"), &newAttributes)
+	resp.Diagnostics.Append(diag...)
+
+	diag = req.Config.GetAttribute(ctx, path.Root("context").AtName("attributes"), &parentAttributes)
+	resp.Diagnostics.Append(diag...)
+
+	if !(parentAttributes.Null || parentAttributes.Unknown) {
+		diag = parentAttributes.ElementsAs(ctx, &attributes, false)
+		resp.Diagnostics.Append(diag...)
+	}
+
+	if !(newAttributes.Null || newAttributes.Unknown) {
+		var appendAttributes []string
+		diag = newAttributes.ElementsAs(ctx, &appendAttributes, false)
+		resp.Diagnostics.Append(diag...)
+		attributes = append(attributes, appendAttributes...)
+	}
+
+	diag = resp.State.SetAttribute(ctx, path.Root("attributes"), attributes)
+
+	// merge tags
+	tags := map[string]string{}
+	var newTags types.Map
+	var parentTags types.Map
+
+	diag = req.Config.GetAttribute(ctx, path.Root("tags"), &newTags)
+	resp.Diagnostics.Append(diag...)
+
+	diag = req.Config.GetAttribute(ctx, path.Root("context").AtName("tags"), &parentTags)
+	resp.Diagnostics.Append(diag...)
+
+	if !(parentTags.Null || parentTags.Unknown) {
+		diag = parentTags.ElementsAs(ctx, &tags, false)
+		resp.Diagnostics.Append(diag...)
+	}
+
+	if !(newTags.Null || newTags.Unknown) {
+		var appendTags map[string]string
+		diag = newTags.ElementsAs(ctx, &appendTags, false)
+		resp.Diagnostics.Append(diag...)
+		for k, v := range appendTags {
+			tags[k] = v
 		}
 	}
 
-	if descriptor.Attributes != nil && *descriptor.Attributes {
-		idParts = append(idParts, d.Attributes...)
+	diag = resp.State.SetAttribute(ctx, path.Root("tags"), tags)
+	resp.Diagnostics.Append(diag...)
+
+	// merge descriptors
+	descriptors := map[string]Descriptor{}
+
+	// default id descriptor
+	defaultDelimiter := "-"
+	defaultLimit := 64
+	defaultAttributes := true
+	defaultLower := true
+	descriptors["id"] = Descriptor{
+		Delimiter:  &defaultDelimiter,
+		Lower:      &defaultLower,
+		Attributes: &defaultAttributes,
+		Limit:      &defaultLimit,
 	}
 
-	if descriptor.Reverse != nil && *descriptor.Reverse {
-		for i, j := 0, len(idParts)-1; i < j; i, j = i+1, j-1 {
-			idParts[i], idParts[j] = idParts[j], idParts[i]
+	var newDescriptors types.Map
+	var parentDescriptors types.Map
+
+	diag = req.Config.GetAttribute(ctx, path.Root("descriptors"), &newDescriptors)
+	resp.Diagnostics.Append(diag...)
+
+	diag = req.Config.GetAttribute(ctx, path.Root("context").AtName("descriptors"), &parentDescriptors)
+	resp.Diagnostics.Append(diag...)
+
+	if !(parentDescriptors.Null || parentDescriptors.Unknown) {
+		diag = parentDescriptors.ElementsAs(ctx, &descriptors, false)
+		resp.Diagnostics.Append(diag...)
+	}
+
+	if !(newDescriptors.Null || newDescriptors.Unknown) {
+		var appendDescriptors map[string]Descriptor
+		diag = newDescriptors.ElementsAs(ctx, &appendDescriptors, false)
+		resp.Diagnostics.Append(diag...)
+		for k, v := range appendDescriptors {
+			descriptors[k] = v
 		}
 	}
 
-	id := strings.Join(idParts, *descriptor.Delimiter)
+	diag = resp.State.SetAttribute(ctx, path.Root("descriptors"), descriptors)
+	resp.Diagnostics.Append(diag...)
 
-	if descriptor.Upper != nil && *descriptor.Upper {
-		id = strings.ToUpper(id)
-	}
-	if descriptor.Lower != nil && *descriptor.Lower {
-		id = strings.ToLower(id)
-	}
-	if descriptor.Title != nil && *descriptor.Title {
-		id = strings.Title(id)
+	// outputs from descriptors
+	outputs := map[string]string{}
+	for name, descriptor := range descriptors {
+		idParts := []string{}
+
+		for _, tag_key := range descriptor.Order {
+			if tag_val, ok := tags[tag_key]; ok {
+				idParts = append(idParts, tag_val)
+			} else {
+				// TODO - warn
+			}
+		}
+
+		if descriptor.Attributes != nil && *descriptor.Attributes {
+			idParts = append(idParts, attributes...)
+		}
+
+		if descriptor.Reverse != nil && *descriptor.Reverse {
+			for i, j := 0, len(idParts)-1; i < j; i, j = i+1, j-1 {
+				idParts[i], idParts[j] = idParts[j], idParts[i]
+			}
+		}
+
+		id := strings.Join(idParts, *descriptor.Delimiter)
+
+		if descriptor.Upper != nil && *descriptor.Upper {
+			id = strings.ToUpper(id)
+		}
+		if descriptor.Lower != nil && *descriptor.Lower {
+			id = strings.ToLower(id)
+		}
+		if descriptor.Title != nil && *descriptor.Title {
+			id = strings.Title(id)
+		}
+
+		if descriptor.Limit != nil && len(id) > *descriptor.Limit {
+			id = id[:*descriptor.Limit]
+			id = strings.TrimRight(id, *descriptor.Delimiter)
+		}
+
+		outputs[name] = id
 	}
 
-	if descriptor.Limit != nil && len(id) > *descriptor.Limit {
-		id = id[:*descriptor.Limit]
-		id = strings.TrimRight(id, *descriptor.Delimiter)
-	}
-
-	return &id
+	diag = resp.State.SetAttribute(ctx, path.Root("outputs"), outputs)
+	diag = resp.State.SetAttribute(ctx, path.Root("id"), outputs["id"])
 }
