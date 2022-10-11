@@ -101,6 +101,40 @@ func (d *ContextDataSource) GetSchema(ctx context.Context) (tfsdk.Schema, diag.D
 		},
 	}
 
+	legacyAttributes := map[string]tfsdk.Attribute{
+		"enabled": {
+			Type:     types.BoolType,
+			Optional: true,
+		},
+		"attributes": {
+			Type:     types.ListType{ElemType: types.StringType},
+			Optional: true,
+		},
+		"label_order": {
+			Type:     types.ListType{ElemType: types.StringType},
+			Optional: true,
+		},
+		"tags": {
+			Type:     types.MapType{ElemType: types.StringType},
+			Optional: true,
+		},
+		"additional_tag_map": {
+			Type:     types.MapType{ElemType: types.StringType},
+			Optional: true,
+		},
+
+		"namespace":           {Type: types.StringType, Optional: true},
+		"tenant":              {Type: types.StringType, Optional: true},
+		"environment":         {Type: types.StringType, Optional: true},
+		"stage":               {Type: types.StringType, Optional: true},
+		"name":                {Type: types.StringType, Optional: true},
+		"domain_name":         {Type: types.StringType, Optional: true},
+		"delimiter":           {Type: types.StringType, Optional: true},
+		"dns_name_format":     {Type: types.StringType, Optional: true},
+		"regex_replace_chars": {Type: types.StringType, Optional: true},
+		"id_length_limit":     {Type: types.NumberType, Optional: true},
+	}
+
 	attributes := map[string]tfsdk.Attribute{
 		"context": {
 			MarkdownDescription: "TODO",
@@ -115,6 +149,11 @@ func (d *ContextDataSource) GetSchema(ctx context.Context) (tfsdk.Schema, diag.D
 		"id": {
 			MarkdownDescription: "TODO",
 			Type:                types.StringType,
+			Computed:            true,
+		},
+		"legacy": {
+			MarkdownDescription: "TODO",
+			Attributes:          tfsdk.SingleNestedAttributes(legacyAttributes),
 			Computed:            true,
 		},
 	}
@@ -133,23 +172,25 @@ func (d *ContextDataSource) GetSchema(ctx context.Context) (tfsdk.Schema, diag.D
 
 func (d *ContextDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	// merge enabled
-	var enabled types.Bool
-	diag := req.Config.GetAttribute(ctx, path.Root("enabled"), &enabled)
-	resp.Diagnostics.Append(diag...)
-
+	var newEnabled types.Bool
 	var parentEnabled types.Bool
+
+	diag := req.Config.GetAttribute(ctx, path.Root("enabled"), &newEnabled)
+	resp.Diagnostics.Append(diag...)
+	if newEnabled.Null || newEnabled.Unknown {
+		newEnabled.Value = true
+	}
+
 	diag = req.Config.GetAttribute(ctx, path.Root("context").AtName("enabled"), &parentEnabled)
 	resp.Diagnostics.Append(diag...)
-
-	if enabled.Null || enabled.Unknown {
-		if !(parentEnabled.Null || parentEnabled.Unknown) {
-			diag = resp.State.SetAttribute(ctx, path.Root("enabled"), parentEnabled)
-		} else {
-			resp.Diagnostics.AddWarning("Attribute `enabled` not set or inherited.", "Using default: `true`")
-			diag = resp.State.SetAttribute(ctx, path.Root("enabled"), true)
-		}
-		resp.Diagnostics.Append(diag...)
+	if parentEnabled.Null || parentEnabled.Unknown {
+		parentEnabled.Value = true
 	}
+
+	enabled := newEnabled.Value && parentEnabled.Value
+
+	diag = resp.State.SetAttribute(ctx, path.Root("enabled"), enabled)
+	resp.Diagnostics.Append(diag...)
 
 	// merge attributes
 	attributes := []string{}
@@ -289,5 +330,32 @@ func (d *ContextDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	diag = resp.State.SetAttribute(ctx, path.Root("outputs"), outputs)
+	resp.Diagnostics.Append(diag...)
+
 	diag = resp.State.SetAttribute(ctx, path.Root("id"), outputs["id"])
+	resp.Diagnostics.Append(diag...)
+
+	// legacy output
+	diag = resp.State.SetAttribute(ctx, path.Root("legacy").AtName("enabled"), enabled)
+	resp.Diagnostics.Append(diag...)
+
+	diag = resp.State.SetAttribute(ctx, path.Root("legacy").AtName("attributes"), attributes)
+	resp.Diagnostics.Append(diag...)
+
+	legacyTags := map[string]string{}
+	for tag_key, tag_value := range tags {
+		legacyTags[strings.Title(tag_key)] = tag_value
+	}
+	diag = resp.State.SetAttribute(ctx, path.Root("legacy").AtName("tags"), legacyTags)
+	resp.Diagnostics.Append(diag...)
+
+	diag = resp.State.SetAttribute(ctx, path.Root("legacy").AtName("label_order"), descriptors["id"].Order)
+	resp.Diagnostics.Append(diag...)
+
+	for _, tag_key := range []string{"namespace", "tenant", "environment", "stage", "name", "domain_name", "dns_name_format", "delimiter", "regex_replace_chars"} {
+		if val, ok := tags[tag_key]; ok {
+			diag = resp.State.SetAttribute(ctx, path.Root("legacy").AtName(tag_key), val)
+			resp.Diagnostics.Append(diag...)
+		}
+	}
 }

@@ -32,6 +32,7 @@ data "context" "this" {
 ### Read-Only
 
 - `id` (String) TODO
+- `legacy` (Attributes) TODO (see [below for nested schema](#nestedatt--legacy))
 - `outputs` (Map of String) TODO
 
 <a id="nestedatt--context"></a>
@@ -77,5 +78,27 @@ Default: `[]`
 - `reverse` (Boolean) Set `true` to reverse the order of `tags` values specified in `order`
 - `title` (Boolean) Set `true` to force output to title-case
 - `upper` (Boolean) Set `true` to force output to upper-case
+
+
+<a id="nestedatt--legacy"></a>
+### Nested Schema for `legacy`
+
+Optional:
+
+- `additional_tag_map` (Map of String)
+- `attributes` (List of String)
+- `delimiter` (String)
+- `dns_name_format` (String)
+- `domain_name` (String)
+- `enabled` (Boolean)
+- `environment` (String)
+- `id_length_limit` (Number)
+- `label_order` (List of String)
+- `name` (String)
+- `namespace` (String)
+- `regex_replace_chars` (String)
+- `stage` (String)
+- `tags` (Map of String)
+- `tenant` (String)
 
 
