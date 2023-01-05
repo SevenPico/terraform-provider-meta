@@ -24,16 +24,9 @@ data "context" "this" {
 ### Optional
 
 - `attributes` (List of String) TODO
+- `attributes_map` (Map of String) TODO
 - `context` (Attributes) TODO (see [below for nested schema](#nestedatt--context))
-- `descriptors` (Attributes Map) TODO (see [below for nested schema](#nestedatt--descriptors))
 - `enabled` (Boolean) Set `true` if resources using this context should be created.
-- `tags` (Map of String) TODO
-
-### Read-Only
-
-- `id` (String) TODO
-- `legacy` (Attributes) TODO (see [below for nested schema](#nestedatt--legacy))
-- `outputs` (Map of String) TODO
 
 <a id="nestedatt--context"></a>
 ### Nested Schema for `context`
@@ -41,64 +34,7 @@ data "context" "this" {
 Optional:
 
 - `attributes` (List of String) TODO
-- `descriptors` (Attributes Map) TODO (see [below for nested schema](#nestedatt--context--descriptors))
+- `attributes_map` (Map of String) TODO
 - `enabled` (Boolean) Set `true` if resources using this context should be created.
-- `tags` (Map of String) TODO
-
-<a id="nestedatt--context--descriptors"></a>
-### Nested Schema for `context.descriptors`
-
-Optional:
-
-- `attributes` (Boolean) Set `true` to include `attributes` in output
-- `delimiter` (String) String to separate `tags` values specified in `order`.
-Default: ""
-- `limit` (Number) Character limit of output. Tail characters are trimmed.
-- `lower` (Boolean) Set `true` to force output to lower-case
-- `order` (List of String) Ordered list of keys in `tags` for which the corresponding value should be included in the output.
-Default: `[]`
-- `reverse` (Boolean) Set `true` to reverse the order of `tags` values specified in `order`
-- `title` (Boolean) Set `true` to force output to title-case
-- `upper` (Boolean) Set `true` to force output to upper-case
-
-
-
-<a id="nestedatt--descriptors"></a>
-### Nested Schema for `descriptors`
-
-Optional:
-
-- `attributes` (Boolean) Set `true` to include `attributes` in output
-- `delimiter` (String) String to separate `tags` values specified in `order`.
-Default: ""
-- `limit` (Number) Character limit of output. Tail characters are trimmed.
-- `lower` (Boolean) Set `true` to force output to lower-case
-- `order` (List of String) Ordered list of keys in `tags` for which the corresponding value should be included in the output.
-Default: `[]`
-- `reverse` (Boolean) Set `true` to reverse the order of `tags` values specified in `order`
-- `title` (Boolean) Set `true` to force output to title-case
-- `upper` (Boolean) Set `true` to force output to upper-case
-
-
-<a id="nestedatt--legacy"></a>
-### Nested Schema for `legacy`
-
-Optional:
-
-- `additional_tag_map` (Map of String)
-- `attributes` (List of String)
-- `delimiter` (String)
-- `dns_name_format` (String)
-- `domain_name` (String)
-- `enabled` (Boolean)
-- `environment` (String)
-- `id_length_limit` (Number)
-- `label_order` (List of String)
-- `name` (String)
-- `namespace` (String)
-- `regex_replace_chars` (String)
-- `stage` (String)
-- `tags` (Map of String)
-- `tenant` (String)
 
 
